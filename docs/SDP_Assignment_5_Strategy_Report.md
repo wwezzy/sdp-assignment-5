@@ -10,7 +10,7 @@
 
 I implemented a Jarvis task planner that selects the next task from an array. Each JarvisTask stores a title and a difficulty from 1 to 5. I can change the selection rule while the program is running, using the same TaskScheduler object and the same tasks.
 
-TaskScheduler is the context, TaskSelectionStrategy is the common interface, and three concrete strategies contain the selection algorithms. StrategyDemo creates the tasks and configures the context. This follows the family of interchangeable algorithms described in Head First Design Patterns, Chapter 1 [2].
+TaskScheduler is the context, TaskSelectionStrategy is the common interface, and three concrete strategies contain the selection algorithms. StrategyDemo creates the tasks and configures the context. This follows the family of interchangeable algorithms described in Head First Design Patterns, Chapter 1.
 
 ### 1 1 Selection rules
 
@@ -47,22 +47,52 @@ Figure 1. The client, context, strategy interface, concrete strategies and task 
 
 The solid arrow from TaskScheduler shows its stored strategy reference. Dashed arrows with hollow triangles represent interface implementation; the other dashed arrows represent dependencies. The context holds one current strategy. The readOnly task fields correspond to final fields in Java.
 
-## 3 Clean Code Chapter 10
+## 3 Clean Code Principles
 
-I applied the following class design principles from Clean Code, Chapter 10 [1].
+I applied six principles from Robert C. Martin's Clean Code: two from Chapter 9 Unit Tests, two from Chapter 10 Classes, and two from Chapter 11 Systems. The examples below come from the implementation and TaskSchedulerTest.
 
-### 3 1 Encapsulation
+### 3 1 One Concept per Test
 
-I keep task data in private final fields and expose getters. The constructor rejects blank titles and difficulties outside 1-5 before assigning these fields. A selection strategy reads task data without changing it. This follows the chapter's guidance to keep internal data private [1, p. 136].
+Chapter 9, pp. 131-132. I give each test one behavior to check. The test below checks easy-first selection; separate methods check hard-first selection, medium selection and runtime switching. Its setup, action and assertion are separated by blank lines.
+
+```java
+private static void easyFirstSelectsLowestDifficulty() {
+    JarvisTask easy = new JarvisTask("Read notes", 1);
+    JarvisTask hard = new JarvisTask("Complete report", 5);
+    TaskScheduler scheduler = new TaskScheduler(new EasyFirstStrategy());
+
+    JarvisTask selected = scheduler.selectNextTask(new JarvisTask[]{hard, easy});
+
+    assertSame(easy, selected);
+}
+```
+
+### 3 2 Independent and Self Validating Tests
+
+Chapter 9, p. 132, F.I.R.S.T. I apply the Independent, Repeatable and Self-Validating rules. Each test creates its own objects and uses fixed input, so it needs no result from another test, network connection or clock. Assertions report failures automatically. The helper below checks object identity, confirming that selection returns the original task.
+
+```java
+private static void assertSame(JarvisTask expected, JarvisTask actual) {
+    if (expected != actual) {
+        throw new AssertionError("The selected task is not the expected task.");
+    }
+}
+```
+
+### 3 3 Encapsulation
+
+Chapter 10, p. 136. I keep task data in private final fields and expose getters. The constructor rejects blank titles and difficulties outside 1-5 before assigning these fields. Strategies read valid task data without changing it.
 
 ```java
 private final String title;
 private final int difficulty;
 ```
 
-### 3 2 Single Responsibility
+## 3 Clean Code Continued
 
-Each strategy has one selection rule and one reason to change: its criterion. EasyFirstStrategy finds the minimum; HardFirstStrategy finds the maximum. TaskScheduler handles shared input checks and delegation, while StrategyDemo handles the demonstration and console output [1, pp. 138-140].
+### 3 4 Single Responsibility
+
+Chapter 10, pp. 138-140. Each strategy has one selection rule and one reason to change: its criterion. HardFirstStrategy only finds the maximum. TaskScheduler handles shared input checks and delegation, while StrategyDemo handles the demonstration and console output.
 
 ```java
 if (task.getDifficulty() > hardest.getDifficulty()) {
@@ -70,41 +100,30 @@ if (task.getDifficulty() > hardest.getDifficulty()) {
 }
 ```
 
-### 3 3 Cohesion
+### 3 5 Separate Construction from Use
 
-The methods in TaskScheduler work around the same strategy reference. The constructor establishes it, setStrategy replaces it, and selectNextTask uses it. I keep these related operations together, as described in the chapter's discussion of cohesion [1, p. 140].
-
-```java
-public void setStrategy(TaskSelectionStrategy strategy) {
-    if (strategy == null) {
-        throw new IllegalArgumentException(
-                "Strategy must not be null.");
-    }
-    this.strategy = strategy;
-}
-```
-
-## 3 Clean Code Continued
-
-### 3 4 Organizing for Change
-
-I put the variable selection algorithms behind one interface. A new rule can implement this contract without changing TaskScheduler or the existing strategies. The client would create and configure the new strategy. This applies the Open/Closed Principle discussed under Organizing for Change [1, pp. 147-149].
+Chapter 11, pp. 154-156. StrategyDemo.main creates the tasks and concrete strategies and connects them to the scheduler. TaskScheduler.selectNextTask uses the supplied strategy through its interface. It does not construct or choose an algorithm internally.
 
 ```java
-public interface TaskSelectionStrategy {
-    JarvisTask selectTask(JarvisTask[] tasks);
-}
+TaskSelectionStrategy strategy = new EasyFirstStrategy();
+TaskScheduler scheduler = new TaskScheduler(strategy);
+JarvisTask selected = scheduler.selectNextTask(tasks);
 ```
 
-### 3 5 Isolating from Change
+### 3 6 Dependency Injection
 
-TaskScheduler depends on TaskSelectionStrategy rather than a particular algorithm class. I inject the initial strategy through the constructor and can replace it through the setter. The execution call remains the same for all three implementations, following the Dependency Inversion Principle [1, pp. 149-150].
+Chapter 11, p. 157. I supply the initial strategy through the constructor and replace it through setStrategy. This is manual dependency injection: the client supplies the dependency, and the scheduler stores and uses it. A framework is unnecessary for this small program.
+
+```java
+scheduler.setStrategy(new HardFirstStrategy());
+selected = scheduler.selectNextTask(tasks);
+```
 
 ```java
 return strategy.selectTask(tasks);
 ```
 
-The context contains no if/switch that chooses a concrete strategy type. Its conditions validate the input array: it must exist, contain at least one task and contain no null elements. The strategies receive this validated input.
+The first excerpt is the client call; the return statement is the scheduler's delegation. The context has no if/switch on concrete strategy types. Its conditions only validate inputs. A new strategy can implement the interface without changing the context.
 
 ## 4 Conclusion
 
@@ -113,11 +132,3 @@ I can change the rule for selecting the next task without recreating the planner
 ## 5 GitHub Repository
 
 [GitHub repository](https://github.com/wwezzy/sdp-assignment-5)
-
-### References
-
-[1] Robert C. Martin. Clean Code. Chapter 10: Classes, pp. 135-151.
-
-[2] Head First Design Patterns. Chapter 1, pp. 22-24.
-
-[3] Lecture 7 and Assignment 5 Strategy Pattern Instructions. ShP-2216 Software Design Patterns, Astana IT University.

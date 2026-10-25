@@ -37,6 +37,20 @@ Wash dishes
 
 The scheduler requires a non-null strategy and a non-empty task array without null elements. Task construction rejects blank titles and difficulties outside 1-5. Concrete strategies expect the validated input supplied by the scheduler.
 
+## Tests
+
+I keep eight focused checks in `tests/kz/aitu/sdp/strategy/TaskSchedulerTest.java`. Each test creates its own objects and checks one behavior. The tests cover the three selection rules, equal distances, strategy replacement, empty input, a rejected strategy change and the difficulty limit. Assertion failures stop the program with an error.
+
+Compile the application and tests, then run the test class:
+
+```powershell
+$sourceFiles = (Get-ChildItem -Path src, tests -Recurse -Filter *.java).FullName
+javac --release 17 -Xlint:all -d out $sourceFiles
+java -cp out kz.aitu.sdp.strategy.TaskSchedulerTest
+```
+
+Expected output: `All 8 tests passed.` The tests require only JDK 17.
+
 ## UML and report
 
 ![Strategy class diagram](docs/strategy-uml.png)
