@@ -5,6 +5,7 @@ skinparam shadowing false
 skinparam backgroundColor white
 skinparam defaultFontName Arial
 skinparam defaultFontSize 14
+skinparam dpi 180
 skinparam linetype polyline
 hide circle
 
@@ -59,5 +60,7 @@ StrategyDemo ..> JarvisTask : creates
 
 TaskScheduler ..> JarvisTask : validates / returns
 TaskSelectionStrategy ..> JarvisTask : input / result
+EasyFirstStrategy -[hidden]down-> HardFirstStrategy
+HardFirstStrategy -[hidden]down-> MediumDifficultyStrategy
 @enduml
 
