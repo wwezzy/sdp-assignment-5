@@ -15,5 +15,17 @@ public class StrategyDemo {
         System.out.println(selected.getTitle());
         System.out.println(selected.getDifficulty());
 
+        scheduler.setStrategy(new HardFirstStrategy());
+        selected = scheduler.selectNextTask(tasks);
+
+        System.out.println(selected.getTitle());
+        System.out.println(selected.getDifficulty());
+
+        scheduler.setStrategy(new MediumDifficultyStrategy());
+        selected = scheduler.selectNextTask(tasks);
+
+        System.out.println(selected.getTitle());
+        System.out.println(selected.getDifficulty());
+
     }
 }

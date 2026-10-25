@@ -1,0 +1,63 @@
+@startuml
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam linetype polyline
+hide circle
+
+class StrategyDemo <<Client>> {
+  +{static} main(args: String[]): void
+}
+
+class TaskScheduler <<Context>> {
+  -strategy: TaskSelectionStrategy
+  +TaskScheduler(strategy: TaskSelectionStrategy)
+  +setStrategy(strategy: TaskSelectionStrategy): void
+  +selectNextTask(tasks: JarvisTask[]): JarvisTask
+}
+
+interface TaskSelectionStrategy <<Strategy>> {
+  +selectTask(tasks: JarvisTask[]): JarvisTask
+}
+
+together {
+  class EasyFirstStrategy <<ConcreteStrategy>> {
+    +selectTask(tasks: JarvisTask[]): JarvisTask
+  }
+
+  class HardFirstStrategy <<ConcreteStrategy>> {
+    +selectTask(tasks: JarvisTask[]): JarvisTask
+  }
+
+  class MediumDifficultyStrategy <<ConcreteStrategy>> {
+    -{static} TARGET_DIFFICULTY: int = 3 {readOnly}
+    +selectTask(tasks: JarvisTask[]): JarvisTask
+  }
+}
+
+class JarvisTask {
+  -title: String {readOnly}
+  -difficulty: int {readOnly}
+  +JarvisTask(title: String, difficulty: int)
+  +getTitle(): String
+  +getDifficulty(): int
+}
+
+TaskScheduler --> "1" TaskSelectionStrategy : strategy
+EasyFirstStrategy ..|> TaskSelectionStrategy
+HardFirstStrategy ..|> TaskSelectionStrategy
+MediumDifficultyStrategy ..|> TaskSelectionStrategy
+
+StrategyDemo ..> TaskScheduler : creates / uses
+StrategyDemo ..> EasyFirstStrategy : creates
+StrategyDemo ..> HardFirstStrategy : creates
+StrategyDemo ..> MediumDifficultyStrategy : creates
+StrategyDemo ..> JarvisTask : creates
+
+TaskScheduler ..> JarvisTask : validates / returns
+TaskSelectionStrategy ..> JarvisTask : input / result
+@enduml
+
